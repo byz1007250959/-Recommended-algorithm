@@ -25,7 +25,7 @@ public class UserCF {
         List<String> lines=new ArrayList<>();
         try {
             BufferedReader reader=new BufferedReader(new FileReader(new File(filepath)));
-            String line=null;
+            String line;
             while ((line=reader.readLine())!=null){
                 lines.add(line);
             }
