@@ -1,6 +1,7 @@
 package ml100k.algorithm;
 
 import dataset.DataSetPath;
+import ml100k.model.NeighborModel;
 import ml100k.model.RatingModel;
 
 import java.io.*;
@@ -117,11 +118,81 @@ public class UserCF {
         return  resultMap;
     }
 
+    /* *
+     * @author duan
+     * @描述 ：这个函数计算某一个用户的邻居列表，邻居指的是该用户和某些其他用户对某些电影产生了交集,
+     * 在这些和该用户产生交集的用户中函数计算两两用户的相似度，最后排序后进行返回
+     * @date 2018/3/21 12:00
+     * @param  当前用户id：userid，用户打分的map表：userRationMap，电影的倒排表：movieMap
+     * @return   返回该用户的邻居列表
+     */
+    public List<NeighborModel> calNeighbors(Integer userid,Map<Integer,Object> userRationMap,Map<Integer,Object> movieMap){
+        List<NeighborModel> neighborModels=new ArrayList<>();
+        Set<Integer> neighborIds=new HashSet<>();
+        //获取当前用户的电影评分信息
+        Map<Integer,Integer> currentUserRatingMap=(Map<Integer, Integer>) userRationMap.get(userid);
+        for(Map.Entry<Integer,Integer> entry:currentUserRatingMap.entrySet()){
+            /*
+            遍历每一部电影，从电影倒排表中找出对该影片评价过的其他用户
+             */
+            Integer movieId=entry.getKey();
+            Set<Integer> userids=(Set<Integer>) movieMap.get(movieId);
+            for(Integer currentuser:userids){
+                if(currentuser!=userid){
+                    neighborIds.add(currentuser);
+                }
+            }
+        }
+        //遍历邻居集合，计算该用户和其他所有邻居的相似度
+        for(Integer neighborid:neighborIds){
+            if(neighborid.equals(userid))
+                continue;
+            Map<Integer,Integer> neighborRatingMap=(Map<Integer, Integer>) userRationMap.get(neighborid);
+            Double similarity=calSimilarity(currentUserRatingMap,neighborRatingMap);
+            NeighborModel neighborModel=new NeighborModel();
+            neighborModel.setSimilarity(similarity);
+            neighborModel.setUserId(userid);
+            neighborModel.setNeighborId(neighborid);
+            neighborModels.add(neighborModel);
+        }
+        Collections.sort(neighborModels,Collections.reverseOrder());
+        return  neighborModels;
+    }
+
+    /* *
+     * @author duan
+     * @描述  一下函数计算2个用户之间的相似度，采用公式为：|A&B|/sqrt(|A || B |)
+     * @date 2018/3/21 12:40
+     * @param ;入参为两个用户看过的电影打分map
+     * @return 返回为这两个用户的相似度，类型为Double
+     */
+    public Double calSimilarity(Map<Integer,Integer> user1,Map<Integer,Integer> user2){
+        Double similarity;
+        int mixedMovies=0;
+        double unionMovies=0;
+        for(Integer user1Movieid:user1.keySet()){
+            for(Integer user2Movieid:user2.keySet()){
+                if(user1Movieid.equals(user2Movieid)){
+                    mixedMovies++;
+                }
+            }
+        }
+        unionMovies=user1.keySet().size()*user2.keySet().size()*1.0;
+        similarity=mixedMovies/Math.sqrt(unionMovies);
+        return  similarity;
+    }
+
     public  static void main(String args[]){
         UserCF userCF=new UserCF();
         List<String> lines=userCF.readRatingFile(DataSetPath.ML100KPATH+"u.data");
         List<RatingModel> models=userCF.getRatingData(lines);
         Map<String,Map<Integer,Object>> resultMap=userCF.createUserAndMovieMap(models);
+        Map<Integer,Object> userRatingMap=resultMap.get("ratingMap");
+        Map<Integer,Object> movieMap=resultMap.get("movieMap");
+        List<NeighborModel> neighborModels=userCF.calNeighbors(196,userRatingMap,movieMap);
+        for(NeighborModel neighborModel:neighborModels){
+            neighborModel.getSimilarity();
+        }
     }
 
 }
