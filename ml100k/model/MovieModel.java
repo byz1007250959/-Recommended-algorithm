@@ -49,4 +49,15 @@ public class MovieModel {
     public void setUrl(String url) {
         this.url = url;
     }
+
+    @Override
+    public String toString() {
+        return "MovieModel{" +
+                "movieId=" + movieId +
+                ", movieTitle='" + movieTitle + '\'' +
+                ", releaseDate='" + releaseDate + '\'' +
+                ", videlReleaseDate='" + videlReleaseDate + '\'' +
+                ", url='" + url + '\'' +
+                '}';
+    }
 }
