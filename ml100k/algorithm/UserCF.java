@@ -34,7 +34,9 @@ public class UserCF {
         Map<String,Map<Integer,Object>> resultMap=createUserAndMovieMap(ratingModels);
         Map<Integer,Object> userRatingMap=resultMap.get("ratingMap");
         Map<Integer,Object> movieMap=resultMap.get("movieMap");
+        //进行推荐
         List<Integer> recommendMovies=recommendMoviesByUserid(278,10,20,userRatingMap,movieMap);
+        //展示推荐结果
         for(Integer movieid:recommendMovies){
             MovieModel recommendMovie=movieInfoMap.get(movieid);
             System.out.println("推荐电影名："+recommendMovie.getMovieTitle()+"  发布时间:"+recommendMovie.getReleaseDate()+
