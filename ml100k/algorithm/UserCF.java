@@ -24,6 +24,7 @@ public class UserCF {
      * @return void
      */
     public void userCfAlgorithm(){
+        long a=System.currentTimeMillis();
         //读取原始数据
         List<String> moviesdata=readMoviesInfo(DataSetPath.ML100KPATH+"u.item");
         List<String> ratingsdata=readRatingFile(DataSetPath.ML100KPATH+"u.data");
@@ -34,8 +35,12 @@ public class UserCF {
         Map<String,Map<Integer,Object>> resultMap=createUserAndMovieMap(ratingModels);
         Map<Integer,Object> userRatingMap=resultMap.get("ratingMap");
         Map<Integer,Object> movieMap=resultMap.get("movieMap");
+        long b=System.currentTimeMillis();
+        System.out.println("创建模型花费时间:"+(b-a));
         //进行推荐
         List<Integer> recommendMovies=recommendMoviesByUserid(278,10,20,userRatingMap,movieMap);
+        long c=System.currentTimeMillis();
+        System.out.println("为一个用户计算推荐电影花费时间:"+(c-b));
         //展示推荐结果
         for(Integer movieid:recommendMovies){
             MovieModel recommendMovie=movieInfoMap.get(movieid);
