@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="netflix.dao.RatingModelDao">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        <![CDATA[
+      INSERT INTO t_user_rating
+        (
+			userId,movieId,rating
+		)
+      VALUES
+      	(
+			#{userId},#{movieId},#{rating}
+      	)
+    ]]>
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO t_user_rating
+        (
+        userId,movieId,rating
+        )
+        VALUES
+        <foreach collection="list" item="item" open="" separator="," close="">
+            (
+            #{item.userId},#{item.movieId},#{item.rating}
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectbyuserId" resultType="RatingModelMapper" parameterType="int">
+        SELECT * FROM t_user_rating WHERE  userId=#{userId};
+    </select>
+
+</mapper>
