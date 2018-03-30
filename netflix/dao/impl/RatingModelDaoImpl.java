@@ -6,10 +6,8 @@ import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
-
 import java.io.Reader;
 import java.util.List;
-
 /**
  * Created with IDEA
  * USER: Administrator
@@ -23,7 +21,7 @@ public class RatingModelDaoImpl {
     /* *
     * @author duan
     * @描述 :构造函数中加载并获得查询表t_user_rating的dao实例
-    * @date 2018/3/30 14:15
+    * @date 2018/3/30 14:21
     * @param []
     * @return
     */

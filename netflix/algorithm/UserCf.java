@@ -1,6 +1,7 @@
 package netflix.algorithm;
 
 import dataset.DataSetPath;
+import netflix.dao.impl.RatingModelDaoImpl;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,12 +18,12 @@ import java.util.*;
  * 中使用sql语句来获得需要的信息。
  */
 public class UserCf {
-
+    private RatingModelDaoImpl ratingModelDao=new RatingModelDaoImpl();
     /* *
      * @author duan
      * @描述  :这个函数用于构建计算流程中所需要的两种主要map：用户的观影打分map,电影的倒排表
      * @date 2018/3/27 14:30
-     * @param   ：filepath
+     * @param   ：dirpath
      * @return  ：Map结构，其中一个是用户电影的打分map，另一个是电影的倒排表
      */
     @SuppressWarnings("unchecked")
