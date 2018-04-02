@@ -11,8 +11,8 @@ import java.io.*;
  * @描述 : 这个类将netflix数据集的训练集中的17770个小文件合并成为一个大文件
  */
 public class MergeTrainDataFile {
-    private static String TrainDataDir=DataSetPath.NETFLIXPATH+"training";
-    private static String OutputFilePath=DataSetPath.NETFLIXPATH+"merge_file_test.txt";
+    private static String TrainDataDir=DataSetPath.NETFLIXPATH+"training_set";
+    private static String OutputFilePath=DataSetPath.NETFLIXPATH+"merge_file.txt";
 
     /* *
      * @author duan
@@ -57,9 +57,20 @@ public class MergeTrainDataFile {
                     FileReader reader=new FileReader(file);
                     BufferedReader bufferedReader=new BufferedReader(reader);
                     String line;
+                    String currentMovieId="";
                     while ((line=bufferedReader.readLine())!=null){
-                        line+="\n";
-                        writer.write(line);
+                        String newline="";
+                        if(line.endsWith(":")){
+                            //这是一部新的电影的观影记录
+                            currentMovieId=line.substring(0,line.length()-1);
+                        }
+                        else {
+                            String[] fields=line.split(",");
+                            Integer currentUserId=Integer.valueOf(fields[0]);
+                            Integer rating=Integer.valueOf(fields[1]);
+                            newline=currentUserId.toString()+","+currentMovieId+","+rating.toString()+"\n";
+                        }
+                        writer.write(newline);
                     }
                 }
                 writer.flush();

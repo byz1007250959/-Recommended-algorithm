@@ -32,4 +32,8 @@
         SELECT * FROM t_user_rating WHERE  userId=#{userId};
     </select>
 
+    <select id="selectbyMovieId" resultType="RatingModelMapper" parameterType="int">
+        SELECT * FROM t_user_rating WHERE movieId=#{movieId};
+    </select>
+
 </mapper>

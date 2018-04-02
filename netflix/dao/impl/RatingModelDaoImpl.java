@@ -54,4 +54,8 @@ public class RatingModelDaoImpl {
     public List<RatingModel> selectbyuserId(Integer userId){
         return ratingModelDao.selectbyuserId(userId);
     }
+
+    public List<RatingModel> selectbyMovieId(Integer movidId){
+        return ratingModelDao.selectbyMovieId(movidId);
+    }
 }

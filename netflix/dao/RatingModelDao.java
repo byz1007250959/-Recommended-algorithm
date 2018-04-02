@@ -14,4 +14,5 @@ public interface RatingModelDao {
     public Integer insert(RatingModel model);
     public List<RatingModel> selectbyuserId(@Param("userId") Integer userId);
     public Integer insertBatch(List<RatingModel> models);
+    public List<RatingModel> selectbyMovieId(@Param("movieId") Integer movieId);
 }

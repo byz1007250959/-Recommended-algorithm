@@ -1,10 +1,15 @@
 package netflix.algorithm;
 
 import dataset.DataSetPath;
+import ml100k.model.NeighborModel;
+import ml100k.model.UserInterestLevel;
 import netflix.dao.impl.RatingModelDaoImpl;
+import netflix.model.MovieModel;
+import netflix.model.RatingModel;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileReader;
 import java.util.*;
 
 /**
@@ -21,87 +26,209 @@ public class UserCf {
     private RatingModelDaoImpl ratingModelDao=new RatingModelDaoImpl();
     /* *
      * @author duan
-     * @描述  :这个函数用于构建计算流程中所需要的两种主要map：用户的观影打分map,电影的倒排表
+     * @描述  :这个函数构建电影的详细信息map表，用来最后给用户推荐详细的结果
      * @date 2018/3/27 14:30
-     * @param   ：dirpath
-     * @return  ：Map结构，其中一个是用户电影的打分map，另一个是电影的倒排表
+     * @param   ：movieInfoData
+     * @return  ：Map结构表示电影的详细信息表
      */
     @SuppressWarnings("unchecked")
-    public Map<String,Map<Integer,Object>> constructAllNeedMap(String dirpath){
-        Map<String,Map<Integer,Object>> resultMap=new HashMap<>();
-        Map<Integer,Object> userRatingMap=new HashMap<>();
-        Map<Integer,Object> movieMap=new HashMap<>();
+    public Map<Integer,MovieModel> constructMovieInfoMap(String dataFilePath){
+        Map<Integer,MovieModel> movieInfoMap=new HashMap<>();
         try {
-            File dirfile=new File(dirpath);
-            if(!dirfile.exists()){
-                System.out.println("没有找到训练集文件");
+            File datafile=new File(dataFilePath);
+            if(!datafile.exists()){
+                System.out.println("没有找到指定文件");
                 return null;
             }
-            File[] files=dirfile.listFiles();
-            Integer filenum=files.length;
-            System.out.println("该文件夹下一共有:"+filenum+"个文件");
-            Integer num=1;
-            for(File file:files){
-                System.out.println("当前读取第"+num+"个文件");
-                num++;
-                //BufferedReader reader=new BufferedReader(new FileReader(file));
-                Scanner scanner=new Scanner(new FileInputStream(file));
-                Integer currentMovieId=0;
-                //String line=reader.readLine();
-                String line=scanner.nextLine();
-                //每次读取一行来处理
-                while (scanner.hasNextLine()){
-                    if(line.endsWith(":")){
-                        //这是一部新的电影的观影记录
-                        String movieid=line.substring(0,line.length()-1);
-                        currentMovieId=Integer.valueOf(movieid);
-                        Set<Integer> userids=new HashSet<>();
-                        movieMap.put(currentMovieId,userids);
-                    }
-                    else {
-                        String[] fields=line.split(",");
-                        //先在当前电影的观影记录表中添加该用户id
-                        Integer currentUserId=Integer.valueOf(fields[0]);
-                        Integer rating=Integer.valueOf(fields[1]);
-                        Set<Integer> userids=(Set<Integer>) movieMap.get(currentMovieId);
-                        userids.add(currentUserId);
-                        //接下来判断用户打分map中是否存在该用户记录，存在则添加一条，不存在则创建后添加
-                        Map<Integer,Integer> ratingMap;      //这个map记录该用户所有评分过的电影，key：movieid，value：rating
-                        if(userRatingMap.containsKey(currentUserId)){
-                    /*
-                    该用户已存在userRatingMap中，取出该用户的打分map添加一条打分记录
-                    */
-                            ratingMap=(Map<Integer, Integer>) userRatingMap.get(currentUserId);
-                            ratingMap.put(currentMovieId,rating);
-                        }
-                        else {
-                        /*
-                        第一次遇到这个用户，在userRatingMap中添加一条记录
-                        */
-                            ratingMap=new HashMap<>();
-                            ratingMap.put(currentMovieId,rating);
-                            userRatingMap.put(currentUserId,ratingMap);
-                        }
-                    }
-                    //line=reader.readLine();
-                    line=scanner.nextLine();
-                }
+            BufferedReader reader=new BufferedReader(new FileReader(datafile));
+            String line;
+            while ((line=reader.readLine())!=null){
+                String[] fields=line.split(",");
+                Integer movidId=Integer.valueOf(fields[0]);
+                MovieModel model=new MovieModel();
+                model.setMovieId(movidId);
+                model.setReleaseDate(fields[1]);
+                model.setTitle(fields[2]);
+                movieInfoMap.put(movidId,model);
             }
+
         }
         catch (Exception e){
             e.printStackTrace();
         }
-        resultMap.put("ratingMap",userRatingMap);
-        resultMap.put("movieMap",movieMap);
-        return  resultMap;
+        return  movieInfoMap;
+    }
+
+    /* *
+     * @author duan
+     * @描述  :这个函数为一个特定的用户推荐电影，推荐的电影来自他的最近的k个邻居
+     * 并且只给他推荐他可能感兴趣的排名前limitMovie部电影
+     * @date 2018/4/2 14:36
+     * @param
+     * @return
+     */
+    private   List<Integer> recommendMoviesByUserid(Integer userid,Integer limitNeighbor,Integer limitMovie){
+        List<Integer> recommendMovies=new ArrayList<>();
+        //获取当前用户的电影评分信息
+        List<RatingModel> currentUsermodels=ratingModelDao.selectbyuserId(userid);
+        //计算该用户的邻居
+        System.out.println("开始计算相似度");
+        List<NeighborModel> neighborModels=calNeighbors(userid,currentUsermodels);
+        //将最相似的邻居用户转换成map结构方便后面计算，Map<Integer,Double>  key：邻居id  value：相似度
+        Map<Integer,Double> similarityMap=new HashMap<>();
+        for(NeighborModel model:neighborModels){
+            similarityMap.put(model.getNeighborId(),model.getSimilarity());
+        }
+        Set<Integer> allRecommendMovies=new HashSet<>();
+        Set<Integer> seenMovies=new HashSet<>();
+        //寻找该用户看过的电影
+        for(RatingModel model:currentUsermodels){
+            seenMovies.add(model.getMovieId());
+        }
+        //寻找邻居看过的而用户没有看过的电影
+        Set<Integer> nearestNeighbor=new HashSet<>();
+        for(int i=0;i<limitNeighbor;i++){
+            NeighborModel theNeighbor=neighborModels.get(i);
+            Integer neighborId=theNeighbor.getNeighborId();
+            nearestNeighbor.add(neighborId);
+            List<RatingModel> theNeighborModels=ratingModelDao.selectbyuserId(neighborId);
+            for(RatingModel neighborModel:theNeighborModels){
+                if(!seenMovies.contains(neighborModel.getMovieId())){
+                    allRecommendMovies.add(neighborModel.getMovieId());
+                }
+            }
+        }
+        System.out.println("开始计算推荐度");
+        List<UserInterestLevel> finalSortedLevel=calInterestLevelByOneUser(userid,allRecommendMovies,nearestNeighbor,similarityMap);
+        for(int i=0;i<limitMovie;i++){
+            UserInterestLevel interestLevel=finalSortedLevel.get(i);
+            recommendMovies.add(interestLevel.getMovieId());
+        }
+        return  recommendMovies;
+    }
+
+
+    /* *
+     * @author duan
+     * @描述  这个函数计算当前用户userid对某个推荐物品(在本数据集中为电影)的感兴趣程度
+     * 计算公式为：p(u,i)=SUM(Wuv*Rvi) v属于与用户u最相似的k个邻居和看过电影i的用户的交集
+     * Wuv表示用户u和v的相似度，Rvi表示用户v对电影i的评分
+     * @date 2018/4/2 15:14
+     * @param [userid, recommendMovies, nearestNeighbor, similarityMap]
+     * @return java.util.List<ml100k.model.UserInterestLevel>
+     */
+    private List<UserInterestLevel> calInterestLevelByOneUser(Integer userid,Set<Integer> recommendMovies,
+                                                              Set<Integer> nearestNeighbor,Map<Integer,Double> similarityMap){
+        List<UserInterestLevel> resultList=new ArrayList<>();
+        //遍历每一部推荐的电影，计算当前用户对该电影的感兴趣程度
+        for(Integer movieId:recommendMovies){
+            List<Integer> userMixed=new ArrayList<>();  //这个链表保存最近的邻居用户和看过该电影的用户的交集
+            List<RatingModel> seenMovieusers=ratingModelDao.selectbyMovieId(movieId);
+            Set<Integer> userIds=new HashSet<>();
+            for(RatingModel model:seenMovieusers){
+                userIds.add(model.getUserId());
+            }
+            for(Integer neighbor:nearestNeighbor){
+                if(userIds.contains(neighbor)){
+                    userMixed.add(neighbor);
+                }
+            }
+            //没有交集无法计算感兴趣度跳过进行下一个电影计算
+            if(userMixed.isEmpty())
+                continue;
+            //开始计算用户对这部电影的感兴趣程度
+            double interest=0;
+            for(Integer neighborId:userMixed){
+                List<RatingModel> neighborModels=ratingModelDao.selectbyuserId(neighborId);
+                Integer theRating=0;
+                for(RatingModel model:neighborModels){
+                    if(model.getMovieId().equals(movieId)){
+                        theRating=model.getRating();
+                    }
+                }
+                interest+=similarityMap.get(neighborId)*theRating;
+            }
+            UserInterestLevel interestLevel=new UserInterestLevel();
+            interestLevel.setUserId(userid);
+            interestLevel.setInterestLevel(interest);
+            interestLevel.setMovieId(movieId);
+            resultList.add(interestLevel);
+        }
+        Collections.sort(resultList,Collections.reverseOrder());
+        return  resultList;
+    }
+
+    /* *
+     * @author duan
+     * @描述  :计算某个用户的邻居
+     * @date 2018/4/2 14:41
+     * @param [userid]，list<RatingModel> models：用户看过的电影
+     * @return java.util.List<ml100k.model.NeighborModel>
+     */
+    private  List<NeighborModel> calNeighbors(Integer userid,List<RatingModel> currentUsermodels ){
+        List<NeighborModel> neighborModels=new ArrayList<>();
+        Set<Integer> neighborIds=new HashSet<>();
+        for(RatingModel model:currentUsermodels){
+            //寻找存在交集的用户
+            Integer movieId=model.getMovieId();
+            List<RatingModel> seenMovieUsers=ratingModelDao.selectbyMovieId(movieId);
+            for(RatingModel model1:seenMovieUsers){
+                Integer currentUserId=model1.getUserId();
+                if(!currentUserId.equals(userid)){
+                    neighborIds.add(currentUserId);
+                }
+            }
+        }
+        //遍历邻居集合，计算该用户和其他所有邻居的相似度
+        for(Integer neighborid:neighborIds){
+            List<RatingModel> theNeighbormodels=ratingModelDao.selectbyuserId(neighborid);
+            Double similarity=calSimilarity(currentUsermodels,theNeighbormodels);
+            NeighborModel neighborModel=new NeighborModel();
+            neighborModel.setSimilarity(similarity);
+            neighborModel.setUserId(userid);
+            neighborModel.setNeighborId(neighborid);
+            neighborModels.add(neighborModel);
+        }
+        Collections.sort(neighborModels,Collections.reverseOrder());
+        return neighborModels;
+    }
+
+
+    /* *
+     * @author duan
+     * @描述  :这个函数计算两个用户之间的相似度，采用公式为：|A&B|/sqrt(|A || B |)
+     * @date 2018/4/2 14:59
+     * @param [user1, user2]
+     * @return java.lang.Double
+     */
+    private Double calSimilarity(List<RatingModel> user1,List<RatingModel> user2){
+        Double similarity;
+        int mixedMovies=0;
+        double unionMovies;
+        for(RatingModel user1model:user1){
+            for(RatingModel user2model:user2){
+                if(user1model.getMovieId().equals(user2model.getMovieId())){
+                    mixedMovies++;
+                }
+            }
+        }
+        unionMovies=user1.size()*user2.size()*1.0;
+        similarity=mixedMovies/Math.sqrt(unionMovies);
+        return  similarity;
     }
 
     public static void main(String[] args){
-        long a=System.currentTimeMillis();
+
         UserCf userCf=new UserCf();
-        userCf.constructAllNeedMap(DataSetPath.NETFLIXPATH+"training_set");
+        Map<Integer,MovieModel> movieInfoMap=userCf.constructMovieInfoMap(DataSetPath.NETFLIXPATH+"movie_titles.txt");
+        long a=System.currentTimeMillis();
+        List<Integer> recommendMovies=userCf.recommendMoviesByUserid(124105,5,20);
         long b=System.currentTimeMillis();
-        System.out.println("构建相关表消耗时间为:"+(b-a)+"毫秒");
+        System.out.println("为一个用户计算推荐电影花费时间:"+(b-a)/1000+"秒"); //展示推荐结果
+        for(Integer movieid:recommendMovies){
+            MovieModel recommendMovie=movieInfoMap.get(movieid);
+            System.out.println("推荐电影名："+recommendMovie.getTitle()+"  发布时间:"+recommendMovie.getReleaseDate());
+        }
     }
 
 }
