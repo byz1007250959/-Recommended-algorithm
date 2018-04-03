@@ -28,12 +28,15 @@
         </foreach>
     </insert>
 
-    <select id="selectbyuserId" resultType="RatingModelMapper" parameterType="int">
-        SELECT * FROM t_user_rating WHERE  userId=#{userId};
+    <select id="selectMovieIdsByuserId" resultType="java.lang.Integer" parameterType="int">
+        SELECT movieId FROM t_user_rating WHERE  userId=#{userId} ORDER BY rating DESC LIMIT #{limit};
     </select>
 
-    <select id="selectbyMovieId" resultType="RatingModelMapper" parameterType="int">
-        SELECT * FROM t_user_rating WHERE movieId=#{movieId};
+    <select id="selectUserIdsByMovieId" resultType="java.lang.Integer" parameterType="int">
+        SELECT userId FROM t_user_rating WHERE movieId=#{movieId} ORDER BY rating DESC LIMIT #{limit};
     </select>
 
+    <select id="selectRatingByuserIdAndMovieid" resultType="java.lang.Integer" >
+       SELECT rating FROM t_user_rating WHERE movieId=#{userId} AND movieId =#{movieId};
+    </select>
 </mapper>

@@ -1,9 +1,6 @@
 package netflix;
 
 import netflix.dao.impl.RatingModelDaoImpl;
-import netflix.model.RatingModel;
-
-import java.util.List;
 
 /**
  * Created with IDEA
@@ -30,9 +27,5 @@ public class TestDao {
 //        models.add(model2);
 //        models.add(model1);
 //        ratingModelDao.insertBatch(models);
-        List<RatingModel> modelList=ratingModelDao.selectbyuserId(2);
-        for(RatingModel model:modelList){
-            System.out.println(model);
-        }
     }
 }

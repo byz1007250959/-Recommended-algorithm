@@ -1,11 +1,11 @@
 package netflix.dao.impl;
 
 import netflix.dao.RatingModelDao;
-import netflix.model.RatingModel;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+
 import java.io.Reader;
 import java.util.List;
 /**
@@ -38,24 +38,16 @@ public class RatingModelDaoImpl {
 
     }
 
-    public Integer insert(RatingModel model) {
-        Integer insertnum=ratingModelDao.insert(model);
-        sqlSession.commit();
-        return insertnum;
+
+    public List<Integer> selectMovieIdsByuserId(Integer userId,Integer globalLimit){
+        return ratingModelDao.selectMovieIdsByuserId(userId,globalLimit);
     }
 
-
-    public Integer insertBatch(List<RatingModel> models) {
-        Integer insertnum=ratingModelDao.insertBatch(models);
-        sqlSession.commit();
-        return insertnum;
+    public List<Integer> selectUserIdsByMovieId(Integer movidId,Integer globalLimit){
+        return ratingModelDao.selectUserIdsByMovieId(movidId,globalLimit);
     }
 
-    public List<RatingModel> selectbyuserId(Integer userId){
-        return ratingModelDao.selectbyuserId(userId);
-    }
-
-    public List<RatingModel> selectbyMovieId(Integer movidId){
-        return ratingModelDao.selectbyMovieId(movidId);
+    public Integer selectRatingByuserIdAndMovieid(Integer userid,Integer movieid){
+        return ratingModelDao.selectRatingByuserIdAndMovieid(userid,movieid);
     }
 }
