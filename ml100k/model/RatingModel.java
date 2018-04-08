@@ -3,11 +3,23 @@ package ml100k.model;
 /**
  * Created by Administrator on 2018/3/20.
  */
-public class RatingModel {
+public class RatingModel implements Comparable<RatingModel> {
     private Integer userId;
     private Integer movidId;
     private Integer rating;
     private Integer timestamp;
+
+    @Override
+    public int compareTo(RatingModel o) {
+        int mytime=this.getTimestamp();
+        int youtime=o.getTimestamp();
+        if(mytime-youtime>0)
+            return 1;
+        else if(mytime-youtime<0)
+            return -1;
+        else
+            return 0;
+    }
 
     @Override
     public String toString() {
