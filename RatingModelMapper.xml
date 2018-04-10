@@ -39,4 +39,12 @@
     <select id="selectRatingByuserIdAndMovieid" resultType="java.lang.Integer" >
        SELECT rating FROM t_user_rating WHERE movieId=#{userId} AND movieId =#{movieId};
     </select>
+
+    <select id="selectAllUserId" resultType="java.lang.Integer" >
+        SELECT userId FROM `t_user_rating` GROUP BY userId;
+    </select>
+
+    <select id="selectAllMoviesByOneUser" resultType="java.lang.Integer" parameterType="int">
+        SELECT movieId FROM t_user_rating WHERE  userId=#{userId} ;
+    </select>
 </mapper>

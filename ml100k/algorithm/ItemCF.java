@@ -43,7 +43,7 @@ public class ItemCF {
         calItemSimilarity(userRatingMap,movieMap);
         long b=System.currentTimeMillis();
         System.out.println("创建模型并计算物品相似度花费时间:"+(b-a));
-        Set<Integer> recommendMovies=recommendMoviesByUserid(278,15,20,10,userRatingMap);
+        Set<Integer> recommendMovies=recommendMoviesByUserid(234,15,20,10,userRatingMap);
         long c=System.currentTimeMillis();
         System.out.println("为一个用户计算推荐电影花费时间:"+(c-b));
         //展示推荐结果
@@ -233,10 +233,14 @@ public class ItemCF {
         for(Integer userid:userRatingMap.keySet()){
             ratingMap=(Map<Integer, RatingModel>) userRatingMap.get(userid);
             Set<Integer> seenMovies=ratingMap.keySet();
+            List<Integer> movies=new ArrayList<>();
+            for(Integer integer:seenMovies)
+                movies.add(integer);
             //两两电影在相似度矩阵中加1
-            for(Integer movieId1:seenMovies){
-                for(Integer movieId2:seenMovies){
-                    if(!movieId1.equals(movieId2))
+            for(int i=0;i<movies.size();i++){
+                for(int j=i+1;j<movies.size();j++){
+                        int movieId1=movies.get(i);
+                        int movieId2=movies.get(j);
                         itemsMixed[movieId1-1][movieId2-1]+=1;
                 }
             }
@@ -281,7 +285,11 @@ public class ItemCF {
             seenMovies.add(model.getMovidId());
         }
         Collections.sort(historyMovies,Collections.reverseOrder());
-        List<RatingModel> limithistory=historyMovies.subList(0,limitHistory);
+        List<RatingModel> limithistory;
+        if(limitHistory<historyMovies.size())
+            limithistory=historyMovies.subList(0,limitHistory);
+        else
+            limithistory=historyMovies;
         //下面从选中的电影中挑选最相似的k部电影放到一起
         Set<Integer> choiceMovies=new HashSet<>();
         for(RatingModel model:limithistory){
@@ -362,7 +370,10 @@ public class ItemCF {
             itemSimilarityModels.add(model1);
         }
         Collections.sort(itemSimilarityModels,Collections.reverseOrder());
-        return itemSimilarityModels.subList(0,k);
+        if(k>itemSimilarityModels.size())
+            return  itemSimilarityModels;
+        else
+            return itemSimilarityModels.subList(0,k);
     }
 
     public static void main(String args[]){

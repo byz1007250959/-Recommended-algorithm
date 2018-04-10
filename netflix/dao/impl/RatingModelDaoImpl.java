@@ -50,4 +50,12 @@ public class RatingModelDaoImpl {
     public Integer selectRatingByuserIdAndMovieid(Integer userid,Integer movieid){
         return ratingModelDao.selectRatingByuserIdAndMovieid(userid,movieid);
     }
+
+    public List<Integer> selectAllUserId(){
+        return  ratingModelDao.selectAllUserId();
+    }
+
+    public List<Integer> selectAllMoviesByOneUser(Integer userid){
+        return ratingModelDao.selectAllMoviesByOneUser(userid);
+    }
 }
