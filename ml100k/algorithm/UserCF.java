@@ -15,6 +15,62 @@ import java.util.*;
  * DATE: 2018/3/20
  */
 public class UserCF {
+    private static Integer limitNeighbor=10;
+    private static Integer limitMovie=20;
+    private static String outFilePath="D:/eva/outfile";
+    public void recommendAllUser(){
+        long c=System.currentTimeMillis();
+        List<String> ratingsdata=readRatingFile(DataSetPath.ML100KPATH+"u.data");
+        //创建模型
+        List<RatingModel> ratingModels=getRatingData(ratingsdata);
+        Map<String,Map<Integer,Object>> resultMap=createUserAndMovieMap(ratingModels);
+        Map<Integer,Object> userRatingMap=resultMap.get("ratingMap");
+        Map<Integer,Object> movieMap=resultMap.get("movieMap");
+        File outfile=new File(outFilePath);
+        if(!outfile.exists()){
+            try {
+                outfile.createNewFile();
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        else {
+            try {
+                FileWriter fileWriter=new FileWriter(outfile);
+                fileWriter.write("");
+                fileWriter.flush();
+                fileWriter.close();
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        try {
+            FileWriter writer=new FileWriter(outfile);
+            for(int i=1;i<=943;i++){
+                //long a=System.currentTimeMillis();
+                System.out.println("正在对用户"+i+"推荐电影");
+                List<Integer> recommedIds=recommendMoviesByUserid(i,limitNeighbor,limitMovie,userRatingMap,movieMap);
+                //long b=System.currentTimeMillis();
+                //System.out.println("对用户"+i+"推荐花费时间:"+(b-a)+"毫秒");
+                StringBuffer stringBuffer=new StringBuffer();
+                stringBuffer.append(i);
+                stringBuffer.append("\t");
+                for(Integer movieId:recommedIds){
+                    stringBuffer.append(movieId);
+                    stringBuffer.append(",");
+                }
+                stringBuffer.append("\n");
+                writer.write(stringBuffer.toString());
+            }
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        long d=System.currentTimeMillis();
+        System.out.println("计算总时间花费"+(d-c)/1000+"秒");
+    }
 
     /* *
      * @author duan
@@ -38,7 +94,7 @@ public class UserCF {
         long b=System.currentTimeMillis();
         System.out.println("创建模型花费时间:"+(b-a));
         //进行推荐
-        List<Integer> recommendMovies=recommendMoviesByUserid(278,10,20,userRatingMap,movieMap);
+        List<Integer> recommendMovies=recommendMoviesByUserid(234,10,20,userRatingMap,movieMap);
         long c=System.currentTimeMillis();
         System.out.println("为一个用户计算推荐电影花费时间:"+(c-b));
         //展示推荐结果
@@ -299,12 +355,12 @@ public class UserCF {
             similarityMap.put(model.getNeighborId(),model.getSimilarity());
         }
         Set<Integer> allRecommendMovies=new HashSet<>();
-        Set<Integer> seenMovies=new HashSet<>();
+        //Set<Integer> seenMovies=new HashSet<>();
         //寻找该用户看过的电影
-        Map<Integer,Integer> myRationgMap=(Map<Integer, Integer>) userRationMap.get(userid);
-        for(Integer key:myRationgMap.keySet()){
-            seenMovies.add(key);
-        }
+//        Map<Integer,Integer> myRationgMap=(Map<Integer, Integer>) userRationMap.get(userid);
+//        for(Integer key:myRationgMap.keySet()){
+//            seenMovies.add(key);
+//        }
         //寻找邻居看过的而用户没有看过的电影
         Set<Integer> nearestNeighbor=new HashSet<>();
         for(int i=0;i<limitNeighbor;i++){
@@ -313,9 +369,9 @@ public class UserCF {
             nearestNeighbor.add(neighborId);
             Map<Integer,Integer> theNeighborMap=(Map<Integer, Integer>) userRationMap.get(neighborId);
             for(Integer key:theNeighborMap.keySet()){
-                if(!seenMovies.contains(key)){
+            //    if(!seenMovies.contains(key)){
                     allRecommendMovies.add(key);
-                }
+            //    }
             }
         }
         List<UserInterestLevel> finalSortedLevel=calInterestLevelByOneUser(userid,allRecommendMovies,nearestNeighbor,userRationMap,movieMap,similarityMap);
@@ -371,7 +427,7 @@ public class UserCF {
 
     public  static void main(String args[]){
         UserCF userCF=new UserCF();
-        userCF.userCfAlgorithm();
+        userCF.recommendAllUser();
     }
 
 }

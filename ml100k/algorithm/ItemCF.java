@@ -8,6 +8,7 @@ import ml100k.model.UserInterestLevel;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.*;
 
 /**
@@ -20,6 +21,65 @@ import java.util.*;
 public class ItemCF {
     private int[][] itemsMixed=new int[1682][1682];
     private double[][] itemsSimilarity=new double[1682][1682];
+    private static String outFilePath="D:/eva/outfile";
+    private static Integer limitHistory=10;
+    private static Integer limitMovie=20;
+    private static Integer k=10;  //k用来记录和某个物品最相似的物品限制数
+    public void recommendAlluser(){
+        long c=System.currentTimeMillis();
+        List<String> ratingsdata=readRatingFile(DataSetPath.ML100KPATH+"u.data");
+        //创建模型
+        List<RatingModel> ratingModels=getRatingData(ratingsdata);
+        Map<String,Map<Integer,Object>> resultMap=createUserAndMovieMap(ratingModels);
+        Map<Integer,Object> userRatingMap=resultMap.get("ratingMap");
+        Map<Integer,Object> movieMap=resultMap.get("movieMap");
+        calItemSimilarity(userRatingMap,movieMap);
+        File outfile=new File(outFilePath);
+        if(!outfile.exists()){
+            try {
+                outfile.createNewFile();
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        else {
+            try {
+                FileWriter fileWriter=new FileWriter(outfile);
+                fileWriter.write("");
+                fileWriter.flush();
+                fileWriter.close();
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        try {
+            FileWriter writer=new FileWriter(outfile);
+            for(int i=1;i<=943;i++){
+                //long a=System.currentTimeMillis();
+                System.out.println("正在对用户"+i+"推荐电影");
+                Set<Integer> recommedIds=recommendMoviesByUserid(i,limitHistory,limitMovie,k,userRatingMap);
+                //long b=System.currentTimeMillis();
+                //System.out.println("对用户"+i+"推荐花费时间:"+(b-a)+"毫秒");
+                StringBuffer stringBuffer=new StringBuffer();
+                stringBuffer.append(i);
+                stringBuffer.append("\t");
+                for(Integer movieId:recommedIds){
+                    stringBuffer.append(movieId);
+                    stringBuffer.append(",");
+                }
+                stringBuffer.append("\n");
+                writer.write(stringBuffer.toString());
+            }
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        long d=System.currentTimeMillis();
+        System.out.println("计算总时间花费"+(d-c)/1000+"秒");
+    }
+
 
     /* *
      * @author duan
@@ -296,7 +356,7 @@ public class ItemCF {
             Integer movieid=model.getMovidId();
             List<ItemSimilarityModel> similarityModels=calMostSimilarityKModels(movieid,k);
             for(ItemSimilarityModel model1:similarityModels){
-                if(!seenMovies.contains(model1.getTargetItem()))
+            //    if(!seenMovies.contains(model1.getTargetItem()))
                     choiceMovies.add(model1.getTargetItem());
             }
         }
@@ -340,7 +400,7 @@ public class ItemCF {
                     interest+=rating*itemsSimilarity[choice-1][movieid];
                     UserInterestLevel interestLevel=new UserInterestLevel();
                     interestLevel.setUserId(userid);
-                    interestLevel.setMovieId(movieid);
+                    interestLevel.setMovieId(choice);
                     interestLevel.setInterestLevel(interest);
                     resultList.add(interestLevel);
                 }
@@ -378,7 +438,7 @@ public class ItemCF {
 
     public static void main(String args[]){
         ItemCF itemCF=new ItemCF();
-        itemCF.itemCfAlgorithm();
+        itemCF.recommendAlluser();
     }
 
 }
