@@ -57,6 +57,10 @@ public class ItemCF {
         try {
             FileWriter writer=new FileWriter(outfile);
             for(int i=1;i<=943;i++){
+                if(i==892){
+                    System.out.println();
+                    int ccc=11111;
+                }
                 //long a=System.currentTimeMillis();
                 System.out.println("正在对用户"+i+"推荐电影");
                 Set<Integer> recommedIds=recommendMoviesByUserid(i,limitHistory,limitMovie,k,userRatingMap);
@@ -72,6 +76,8 @@ public class ItemCF {
                 stringBuffer.append("\n");
                 writer.write(stringBuffer.toString());
             }
+            writer.flush();
+            writer.close();
         }
         catch (Exception e){
             e.printStackTrace();

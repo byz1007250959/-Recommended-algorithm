@@ -64,6 +64,8 @@ public class UserCF {
                 stringBuffer.append("\n");
                 writer.write(stringBuffer.toString());
             }
+            writer.flush();
+            writer.close();
         }
         catch (Exception e){
             e.printStackTrace();
