@@ -1,31 +1,37 @@
-package ml100k.algorithm;
+package netflix.algorithm;
 
 import dataset.DataSetPath;
-import ml100k.model.MovieModel;
 import ml100k.model.NeighborModel;
 import ml100k.model.RatingModel;
 import ml100k.model.UserInterestLevel;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.*;
 
 /**
  * Created with IDEA
  * USER: Administrator
- * DATE: 2018/3/20
+ * DATE: 2018/5/9
+ *
+ * @描述:取netflix的前1000部电影作为一个子数据集，数据集大小约为65m
+ * 实现方式也依然选择将模型数据存入内存计算，与ml-100k实现方式相同
  */
-public class UserCF {
+public class UserCfSubset {
     private static Integer limitNeighbor=10;
     private static Integer limitMovie=20;
     private static String outFilePath="D:/eva/outfile";
     public void recommendAllUser(){
-        long c=System.currentTimeMillis();
-        List<String> ratingsdata=readRatingFile(DataSetPath.ML100KPATH+"u.data");
+        long a=System.currentTimeMillis();
+        List<String> ratingsdata=readRatingFile(DataSetPath.NETFLIXPATH+"merge_file.txt");
         //创建模型
         List<RatingModel> ratingModels=getRatingData(ratingsdata);
         Map<String,Map<Integer,Object>> resultMap=createUserAndMovieMap(ratingModels);
         Map<Integer,Object> userRatingMap=resultMap.get("ratingMap");
         Map<Integer,Object> movieMap=resultMap.get("movieMap");
+        long c=System.currentTimeMillis();
+        System.out.println("创建模型花费时间"+(c-a)/1000+"秒");
         File outfile=new File(outFilePath);
         if(!outfile.exists()){
             try {
@@ -48,14 +54,18 @@ public class UserCF {
         }
         try {
             FileWriter writer=new FileWriter(outfile);
-            for(int i=1;i<=943;i++){
+            Set<Integer> userids=userRatingMap.keySet();
+            System.out.println("一共要对"+userids.size()+"个用户推荐电影");
+            int i=0;
+            for(Integer id:userids){
                 //long a=System.currentTimeMillis();
-                System.out.println("正在对用户"+i+"推荐电影");
-                List<Integer> recommedIds=recommendMoviesByUserid(i,limitNeighbor,limitMovie,userRatingMap,movieMap);
+                i++;
+                System.out.println("正在对第"+i+"个用户推荐电影");
+                List<Integer> recommedIds=recommendMoviesByUserid(id,limitNeighbor,limitMovie,userRatingMap,movieMap);
                 //long b=System.currentTimeMillis();
                 //System.out.println("对用户"+i+"推荐花费时间:"+(b-a)+"毫秒");
                 StringBuffer stringBuffer=new StringBuffer();
-                stringBuffer.append(i);
+                stringBuffer.append(id);
                 stringBuffer.append("\t");
                 for(Integer movieId:recommedIds){
                     stringBuffer.append(movieId);
@@ -70,8 +80,8 @@ public class UserCF {
         catch (Exception e){
             e.printStackTrace();
         }
-        long d=System.currentTimeMillis();
-        System.out.println("计算总时间花费"+(d-c)/1000+"秒");
+        long b=System.currentTimeMillis();
+        System.out.println("计算总时间花费"+(b-a)/1000+"秒");
     }
 
     /* *
@@ -84,72 +94,30 @@ public class UserCF {
     public void userCfAlgorithm(){
         long a=System.currentTimeMillis();
         //读取原始数据
-        List<String> moviesdata=readMoviesInfo(DataSetPath.ML100KPATH+"u.item");
-        List<String> ratingsdata=readRatingFile(DataSetPath.ML100KPATH+"u.data");
+        //List<String> moviesdata=readMoviesInfo(DataSetPath.ML100KPATH+"u.item");
+        List<String> ratingsdata=readRatingFile(DataSetPath.NETFLIXPATH+"merge_file.txt");
         //创建模型
-        List<MovieModel> movieModels=getMovieData(moviesdata);
+        //List<MovieModel> movieModels=getMovieData(moviesdata);
         List<RatingModel> ratingModels=getRatingData(ratingsdata);
-        Map<Integer,MovieModel> movieInfoMap=createMovieInfoMap(movieModels);
+        //Map<Integer,MovieModel> movieInfoMap=createMovieInfoMap(movieModels);
         Map<String,Map<Integer,Object>> resultMap=createUserAndMovieMap(ratingModels);
         Map<Integer,Object> userRatingMap=resultMap.get("ratingMap");
         Map<Integer,Object> movieMap=resultMap.get("movieMap");
         long b=System.currentTimeMillis();
         System.out.println("创建模型花费时间:"+(b-a));
         //进行推荐
-        List<Integer> recommendMovies=recommendMoviesByUserid(234,10,20,userRatingMap,movieMap);
+        List<Integer> recommendMovies=recommendMoviesByUserid(822109,10,20,userRatingMap,movieMap);
         long c=System.currentTimeMillis();
         System.out.println("为一个用户计算推荐电影花费时间:"+(c-b));
         //展示推荐结果
-        for(Integer movieid:recommendMovies){
-            MovieModel recommendMovie=movieInfoMap.get(movieid);
-            System.out.println("推荐电影名："+recommendMovie.getMovieTitle()+"  发布时间:"+recommendMovie.getReleaseDate()+
-            "  观看地址:"+recommendMovie.getUrl());
+//        for(Integer movieid:recommendMovies){
+//            MovieModel recommendMovie=movieInfoMap.get(movieid);
+//            System.out.println("推荐电影名："+recommendMovie.getMovieTitle()+"  发布时间:"+recommendMovie.getReleaseDate()+
+//                    "  观看地址:"+recommendMovie.getUrl());
+//        }
+        for(Integer i:recommendMovies){
+            System.out.print(i+" ");
         }
-    }
-
-    /* *
-     * @author duan
-     * @描述  :此方法将u.item文件按照行读入
-     * @date 2018/3/23 16:10
-     * @param ：文件路径
-     * @return ：字符串数组ArrayList
-     */
-    private List<String> readMoviesInfo(String filepath){
-        List<String> lines=new ArrayList<>();
-        try {
-            BufferedReader reader=new BufferedReader(new FileReader(new File(filepath)));
-            String line;
-            while ((line=reader.readLine())!=null){
-                lines.add(line);
-            }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        return  lines;
-    }
-
-    /* *
-     * @author duan
-     * @描述  :此方法将读入的电影信息格式化为MovieModel
-     * @date 2018/3/23 16:13
-     * @param  ：字符串链表
-     * @return  ：电影模型链表
-     */
-    private List<MovieModel> getMovieData(List<String> lines){
-        List<MovieModel> movieModels=new ArrayList<>();
-        for(String line:lines){
-            MovieModel model=new MovieModel();
-            String[] fields=line.split("\\|");
-            model.setMovieId(Integer.valueOf(fields[0]));
-            model.setMovieTitle(fields[1]);
-            model.setReleaseDate(fields[2]);
-            model.setVidelReleaseDate(fields[3]);
-            model.setUrl(fields[4]);
-            movieModels.add(model);
-        }
-        return  movieModels;
     }
 
 
@@ -191,26 +159,12 @@ public class UserCF {
             model.setUserId(Integer.valueOf(fields[0]));
             model.setMovidId(Integer.valueOf(fields[1]));
             model.setRating(Integer.valueOf(fields[2]));
-            model.setTimestamp(Integer.valueOf(fields[3]));
+            //model.setTimestamp(Integer.valueOf(fields[3]));
             ratingModels.add(model);
         }
         return  ratingModels;
     }
 
-    /* *
-     * @author duan
-     * @描述  :此方法构建电影信息的map表结构，用于最终将推荐电影的id转化为具体的电影信息
-     * @date 2018/3/23 16:31
-     * @param   ：List<MovieModel>
-     * @return  :Map<Integer,MovieModel>  key:电影id  value：该电影的模型
-     */
-    private Map<Integer,MovieModel> createMovieInfoMap(List<MovieModel> movieModels){
-        Map<Integer,MovieModel> resultMap=new HashMap<>();
-        for(MovieModel movieModel:movieModels){
-            resultMap.put(movieModel.getMovieId(),movieModel);
-        }
-        return  resultMap;
-    }
 
     /* *
      * @author duan
@@ -281,7 +235,7 @@ public class UserCF {
      * @return   返回该用户的邻居列表
      */
     @SuppressWarnings("unchecked")
-    private List<NeighborModel> calNeighbors(Integer userid,Map<Integer,Object> userRationMap,Map<Integer,Object> movieMap){
+    private List<NeighborModel> calNeighbors(Integer userid, Map<Integer,Object> userRationMap, Map<Integer,Object> movieMap){
         List<NeighborModel> neighborModels=new ArrayList<>();
         Set<Integer> neighborIds=new HashSet<>();
         //获取当前用户的电影评分信息
@@ -347,7 +301,7 @@ public class UserCF {
      */
     @SuppressWarnings("unchecked")
     private   List<Integer> recommendMoviesByUserid(Integer userid,Integer limitNeighbor,Integer limitMovie,
-                                                  Map<Integer,Object> userRationMap,Map<Integer,Object> movieMap){
+                                                    Map<Integer,Object> userRationMap,Map<Integer,Object> movieMap){
         List<Integer> recommendMovies=new ArrayList<>();
         //计算该用户的邻居
         List<NeighborModel> neighborModels=calNeighbors(userid,userRationMap,movieMap);
@@ -371,9 +325,9 @@ public class UserCF {
             nearestNeighbor.add(neighborId);
             Map<Integer,Integer> theNeighborMap=(Map<Integer, Integer>) userRationMap.get(neighborId);
             for(Integer key:theNeighborMap.keySet()){
-            //    if(!seenMovies.contains(key)){
-                    allRecommendMovies.add(key);
-            //    }
+                //    if(!seenMovies.contains(key)){
+                allRecommendMovies.add(key);
+                //    }
             }
         }
         List<UserInterestLevel> finalSortedLevel=calInterestLevelByOneUser(userid,allRecommendMovies,nearestNeighbor,userRationMap,movieMap,similarityMap);
@@ -398,7 +352,7 @@ public class UserCF {
      */
     @SuppressWarnings("unchecked")
     private List<UserInterestLevel> calInterestLevelByOneUser(Integer userid,Set<Integer> recommendMovies,Set<Integer> nearestNeighbor,
-                                                             Map<Integer,Object> userRationMap,Map<Integer,Object> movieMap,Map<Integer,Double> similarityMap){
+                                                              Map<Integer,Object> userRationMap,Map<Integer,Object> movieMap,Map<Integer,Double> similarityMap){
         List<UserInterestLevel> resultList=new ArrayList<>();
         //遍历每一部推荐的电影，计算当前用户对该电影的感兴趣程度
         for(Integer movieId:recommendMovies){
@@ -430,8 +384,8 @@ public class UserCF {
     }
 
     public  static void main(String args[]){
-        UserCF userCF=new UserCF();
-        userCF.recommendAllUser();
+       UserCfSubset subset=new UserCfSubset();
+       subset.recommendAllUser();
     }
 
 }

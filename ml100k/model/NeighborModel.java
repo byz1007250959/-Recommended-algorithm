@@ -37,14 +37,15 @@ public class NeighborModel implements Comparable<NeighborModel>{
 
     @Override
     public int compareTo(NeighborModel o) {
-        double otherSimilarity=o.getSimilarity();
-        double mySimilarity=this.getSimilarity();
-        if(mySimilarity-otherSimilarity>0)
-            return 1;
-        else if(mySimilarity-otherSimilarity<0)
-            return -1;
-        else
-            return 0;
+        return this.getSimilarity().compareTo(o.getSimilarity());
+//        double otherSimilarity=o.getSimilarity();
+//        double mySimilarity=this.getSimilarity();
+//        if(mySimilarity-otherSimilarity>0)
+//            return 1;
+//        else if(mySimilarity-otherSimilarity<0)
+//            return -1;
+//        else
+//            return 0;
     }
 
     @Override

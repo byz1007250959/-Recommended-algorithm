@@ -3,15 +3,17 @@ package netflix;
 import dataset.DataSetPath;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created with IDEA
  * USER: Administrator
  * DATE: 2018/3/27
- * @描述 : 这个类将netflix数据集的训练集中的17770个小文件合并成为一个大文件
+ * @描述 : 这个类将netflix数据集的训练集中的x个小文件合并成为一个大文件
  */
 public class MergeTrainDataFile {
-    private static String TrainDataDir=DataSetPath.NETFLIXPATH+"training_set";
+    private static String TrainDataDir=DataSetPath.NETFLIXPATH+"training";
     private static String OutputFilePath=DataSetPath.NETFLIXPATH+"merge_file.txt";
 
     /* *
@@ -51,6 +53,7 @@ public class MergeTrainDataFile {
             File[] files=dirfile.listFiles();
             filenum=files.length;
             System.out.println("该文件夹下一共有:"+filenum+"个文件");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
             try {
                 FileWriter writer=new FileWriter(mergeFile);
                 for(File file:files){
@@ -68,7 +71,11 @@ public class MergeTrainDataFile {
                             String[] fields=line.split(",");
                             Integer currentUserId=Integer.valueOf(fields[0]);
                             Integer rating=Integer.valueOf(fields[1]);
-                            newline=currentUserId.toString()+","+currentMovieId+","+rating.toString()+"\n";
+                            String day=fields[2];
+                            Date date = simpleDateFormat.parse(day);
+                            Long time=date.getTime()/1000;
+                            Integer timestamps=time.intValue();
+                            newline=currentUserId.toString()+"\t"+currentMovieId+"\t"+rating.toString()+"\t"+timestamps+"\n";
                         }
                         writer.write(newline);
                     }

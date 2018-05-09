@@ -34,16 +34,22 @@ public class UserInterestLevel implements Comparable<UserInterestLevel>{
         this.interestLevel = interestLevel;
     }
 
+    /*
+    java7版本中的排序方法与前版本存在不兼容，自己实现的比较方法可能不
+    满足排序方法所要求性质，此处使用double自己的compare方法来消除异常
+    的出现
+     */
     @Override
     public int compareTo(UserInterestLevel o) {
-        double otherlevel=o.getInterestLevel();
-        double mylevel=this.getInterestLevel();
-        if(mylevel-otherlevel>0)
-            return 1;
-        else if(mylevel-otherlevel<0)
-            return -1;
-        else
-            return 0;
+        return this.getInterestLevel().compareTo(o.getInterestLevel());
+//        double otherlevel=o.getInterestLevel();
+//        double mylevel=this.getInterestLevel();
+//        if(mylevel-otherlevel>0)
+//            return 1;
+//        else if(mylevel-otherlevel<0)
+//            return -1;
+//        else
+//            return 0;
 
     }
 

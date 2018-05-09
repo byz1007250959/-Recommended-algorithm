@@ -14,14 +14,15 @@ public class ItemSimilarityModel implements Comparable<ItemSimilarityModel> {
 
     @Override
     public int compareTo(ItemSimilarityModel o) {
-        Double thisSim=this.getSimilarity();
-        Double thatSim=o.getSimilarity();
-        if(thisSim-thatSim>0)
-            return 1;
-        else if(thisSim-thatSim<0)
-            return -1;
-        else
-            return 0;
+        return this.getSimilarity().compareTo(o.getSimilarity());
+//        Double thisSim=this.getSimilarity();
+//        Double thatSim=o.getSimilarity();
+//        if(thisSim-thatSim>0)
+//            return 1;
+//        else if(thisSim-thatSim<0)
+//            return -1;
+//        else
+//            return 0;
     }
 
     @Override
