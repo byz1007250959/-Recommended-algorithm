@@ -22,9 +22,9 @@ public class ItemCF {
     private int[][] itemsMixed=new int[1682][1682];
     private double[][] itemsSimilarity=new double[1682][1682];
     private static String outFilePath="D:/eva/outfile";
-    private static Integer limitHistory=10;
+    private static Integer limitHistory=15;
     private static Integer limitMovie=20;
-    private static Integer k=10;  //k用来记录和某个物品最相似的物品限制数
+    private static Integer k=20;  //k用来记录和某个物品最相似的物品限制数
     public void recommendAlluser(){
         long c=System.currentTimeMillis();
         List<String> ratingsdata=readRatingFile(DataSetPath.ML100KPATH+"u.data");
@@ -442,7 +442,8 @@ public class ItemCF {
 
     public static void main(String args[]){
         ItemCF itemCF=new ItemCF();
-        itemCF.recommendAlluser();
+        itemCF.itemCfAlgorithm();
+        //itemCF.recommendAlluser();
     }
 
 }

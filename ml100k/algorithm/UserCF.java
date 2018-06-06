@@ -15,7 +15,7 @@ import java.util.*;
  * DATE: 2018/3/20
  */
 public class UserCF {
-    private static Integer limitNeighbor=10;
+    private static Integer limitNeighbor=20;
     private static Integer limitMovie=20;
     private static String outFilePath="D:/eva/outfile";
     public void recommendAllUser(){
@@ -431,7 +431,8 @@ public class UserCF {
 
     public  static void main(String args[]){
         UserCF userCF=new UserCF();
-        userCF.recommendAllUser();
+        userCF.userCfAlgorithm();
+        //userCF.recommendAllUser();
     }
 
 }
